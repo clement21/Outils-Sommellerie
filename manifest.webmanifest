@@ -1,0 +1,11 @@
+{
+  "name": "Carnet de Dégustation",
+  "short_name": "Dégustation",
+  "description": "Photographiez une bouteille, remplissez la fiche Œil · Nez · Bouche.",
+  "lang": "fr",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#faf6f1",
+  "theme_color": "#5a1a2b",
+  "icons": [{ "src": "icone.svg", "sizes": "any", "type": "image/svg+xml" }]
+}

@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Carnet de Dégustation</title>
+  <meta name="description" content="Photographiez une bouteille, Claude lit l'étiquette, vous remplissez la fiche de dégustation Œil · Nez · Bouche.">
+  <meta name="theme-color" content="#5a1a2b">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icone.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header class="barre">
+    <button type="button" class="logo" data-global="cave" aria-label="Retour à la cave">
+      <span aria-hidden="true">🍷</span> Carnet de Dégustation
+    </button>
+    <button type="button" class="icone-btn" data-global="reglages" aria-label="Réglages">⚙️</button>
+  </header>
+
+  <main>
+    <!-- Cave : liste des fiches -->
+    <section id="ecran-cave" class="ecran">
+      <button type="button" class="btn principal grand" data-global="nouvelle">📷 Nouvelle dégustation</button>
+      <div id="cave-vide" class="vide-cave">
+        <p class="titre-vide">Votre cave est vide.</p>
+        <ol>
+          <li><strong>Photographiez</strong> l'étiquette (et la contre-étiquette).</li>
+          <li><strong>Claude lit</strong> l'étiquette et vous donne les repères du sommelier.</li>
+          <li><strong>Dégustez</strong> : remplissez la fiche Œil, Nez, Bouche.</li>
+        </ol>
+      </div>
+      <ul id="liste-fiches" class="liste-fiches"></ul>
+    </section>
+
+    <!-- Prise de photo -->
+    <section id="ecran-photo" class="ecran" hidden>
+      <h1>Photographier la bouteille</h1>
+      <p class="intro">Cadrez l'étiquette bien à plat, sans reflet. La contre-étiquette est facultative mais aide beaucoup (cépages, degré, conseils du producteur).</p>
+      <div class="zones-photo">
+        <div class="zone-photo" data-photo="etiquette">
+          <label>
+            <input type="file" accept="image/*" capture="environment" hidden>
+            <span class="apercu-photo"></span>
+            <span class="consigne"><span class="gros" aria-hidden="true">📷</span>Étiquette</span>
+          </label>
+          <button type="button" class="retirer" data-global="retirer-photo" aria-label="Retirer la photo">×</button>
+        </div>
+        <div class="zone-photo" data-photo="contre">
+          <label>
+            <input type="file" accept="image/*" capture="environment" hidden>
+            <span class="apercu-photo"></span>
+            <span class="consigne"><span class="gros" aria-hidden="true">🔄</span>Contre-étiquette<small>facultatif</small></span>
+          </label>
+          <button type="button" class="retirer" data-global="retirer-photo" aria-label="Retirer la photo">×</button>
+        </div>
+      </div>
+      <button type="button" id="btn-analyser" class="btn principal grand" data-global="analyser" disabled>✨ Lire l'étiquette avec Claude</button>
+      <button type="button" class="btn grand" data-global="manuel">Remplir la fiche à la main</button>
+      <div id="chargement" class="chargement" hidden>
+        <div class="verre-anime" aria-hidden="true"></div>
+        <p>Claude lit l'étiquette…<br><small>Cela prend de 10 à 30 secondes.</small></p>
+      </div>
+    </section>
+
+    <!-- Fiche de dégustation -->
+    <section id="ecran-fiche" class="ecran" hidden>
+      <nav id="onglets" class="onglets" role="tablist"></nav>
+      <div id="contenu-section" class="contenu-section"></div>
+      <footer class="actions-fiche">
+        <span id="etat-sauvegarde" class="etat-sauvegarde"></span>
+        <button type="button" class="btn" data-global="apercu">📄 Fiche complète</button>
+        <button type="button" class="btn danger" data-global="supprimer">Supprimer</button>
+      </footer>
+    </section>
+
+    <!-- Aperçu imprimable -->
+    <section id="ecran-apercu" class="ecran" hidden>
+      <div class="actions-apercu">
+        <button type="button" class="btn" data-global="retour-fiche">← Modifier</button>
+        <button type="button" class="btn" data-global="copier">Copier</button>
+        <button type="button" class="btn" data-global="exporter">Exporter (.md)</button>
+        <button type="button" class="btn principal" data-global="imprimer">Imprimer / PDF</button>
+      </div>
+      <div id="apercu-contenu"></div>
+    </section>
+  </main>
+
+  <dialog id="dlg-reglages">
+    <form id="form-reglages" method="dialog">
+      <h2>Réglages</h2>
+      <label class="champ"><span class="label">Clé API Anthropic</span>
+        <input id="reglage-cle" type="password" autocomplete="off" placeholder="sk-ant-…">
+      </label>
+      <p class="petit-texte">Nécessaire pour lire les étiquettes et rédiger les commentaires. Créez-la sur
+        <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener">console.anthropic.com</a>.
+        Elle est enregistrée uniquement dans ce navigateur et envoyée seulement à l'API d'Anthropic.
+        Utilisez une clé dédiée avec une limite de dépense.</p>
+      <label class="champ"><span class="label">Modèle</span><select id="reglage-modele"></select></label>
+      <h3>Sauvegarde de la cave</h3>
+      <p class="petit-texte">Les fiches sont stockées sur cet appareil. Exportez-les régulièrement.</p>
+      <div class="ligne-boutons">
+        <button type="button" id="btn-exporter-tout" class="btn petit">Exporter (.json)</button>
+        <label class="btn petit">Importer<input id="import-fichier" type="file" accept="application/json,.json" hidden></label>
+      </div>
+      <div class="ligne-boutons fin">
+        <button value="annuler" formnovalidate class="btn">Annuler</button>
+        <button value="ok" class="btn principal">Enregistrer</button>
+      </div>
+    </form>
+  </dialog>
+
+  <div id="toast" class="toast" role="status" hidden></div>
+
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
